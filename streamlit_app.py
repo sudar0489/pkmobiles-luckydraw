@@ -119,8 +119,9 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
             if confirmation:
                 # Clear bookings in the CSV and update the set
                 df = pd.DataFrame(columns=["Number", "Name", "Phone"])
-                df.to_csv(DATA_FILE, index=False)
-                booked_numbers.clear()
+                df.to_csv(DATA_FILE, index=False)  # Save empty CSV file to reset bookings
+                booked_numbers.clear()  # Clear the booked numbers set
+                st.experimental_rerun()  # Force a page reload to reset everything
                 st.success("All bookings have been reset.")
                 
     elif admin_password:
