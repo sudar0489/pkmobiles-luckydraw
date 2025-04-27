@@ -54,32 +54,6 @@ with st.form(key="booking_form"):
             st.success(f"Successfully booked numbers {', '.join(map(str, selected_numbers))}!")
             st.session_state.selected_numbers = []  # Clear selected numbers
 
-# Revoke (Cancel) booking section
-st.subheader("🔄 Cancel Booked Numbers:")
-
-# Display the list of numbers a user has booked
-user_booked_numbers = df[df["Name"] == name]["Number"].tolist()
-
-if user_booked_numbers:
-    st.write("Your booked numbers:")
-    st.write(", ".join(map(str, user_booked_numbers)))
-
-    # Allow the user to select which numbers to cancel
-    numbers_to_cancel = st.multiselect("Select numbers to cancel", options=user_booked_numbers)
-
-    if st.button("Cancel Selected Numbers"):
-        if numbers_to_cancel:
-            # Remove the selected numbers from the dataframe and update the CSV
-            df = df[~df["Number"].isin(numbers_to_cancel)]
-            df.to_csv(DATA_FILE, index=False)
-
-            # Update the booked numbers set
-            booked_numbers.difference_update(numbers_to_cancel)
-
-            st.success(f"Successfully canceled numbers: {', '.join(map(str, numbers_to_cancel))}!")
-        else:
-            st.warning("Please select at least one number to cancel.")
-
 # Show grid of numbers (Clickable Boxes)
 st.subheader("📋 Available and Booked Numbers:")
 
@@ -127,6 +101,22 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
         st.write("### All Bookings:")
         st.dataframe(df.sort_values("Number"))
         
+        # Allow admin to select booked numbers to revoke (cancel)
+        cancel_numbers = st.multiselect("Select numbers to revoke (cancel)", options=booked_numbers)
+
+        if st.button("Revoke Selected Numbers"):
+            if cancel_numbers:
+                # Remove the selected numbers from the dataframe and update the CSV
+                df = df[~df["Number"].isin(cancel_numbers)]
+                df.to_csv(DATA_FILE, index=False)
+
+                # Update the booked numbers set
+                booked_numbers.difference_update(cancel_numbers)
+
+                st.success(f"Successfully revoked (cancelled) numbers: {', '.join(map(str, cancel_numbers))}!")
+            else:
+                st.warning("Please select at least one number to revoke.")
+
         # Export the data as a downloadable CSV file
         st.download_button(
             label="Download CSV",
