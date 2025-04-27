@@ -54,30 +54,6 @@ with st.form(key="booking_form"):
             st.success(f"Successfully booked numbers {', '.join(map(str, selected_numbers))}!")
             st.session_state.selected_numbers = []  # Clear selected numbers
 
-# Add custom CSS to make the grid responsive
-st.markdown("""
-    <style>
-        .number-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 10px;
-        }
-        .number-grid div {
-            background-color: #4CAF50;
-            padding: 10px;
-            text-align: center;
-            color: white;
-            font-size: 14px;
-            border-radius: 5px;
-            cursor: pointer;
-            user-select: none;
-        }
-        .number-grid .booked {
-            background-color: #f44336;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 # Show grid of numbers (Clickable Boxes)
 st.subheader("📋 Available and Booked Numbers:")
 
@@ -85,24 +61,28 @@ st.subheader("📋 Available and Booked Numbers:")
 all_numbers = list(range(1, 51))
 sorted_numbers = sorted(all_numbers)
 
-# Create the grid
-number_grid = []
+# Calculate the number of columns for mobile view
+cols = st.columns(4)  # This will display up to 4 columns
 
 # Check if all numbers are booked
 if len(booked_numbers) == len(all_numbers):
     st.warning("🚫 All numbers are booked. Contest is closed. Thanks for participating, we will let you know next contest.")
 else:
-    # Update the booked numbers and display clickable boxes
-    for i in sorted_numbers:
-        # Set color based on the booking status
-        if i in booked_numbers:
-            number_grid.append(f'<div class="number-grid"><div class="booked">{i}</div></div>')  # Booked numbers
-        else:
-            number_grid.append(f'<div class="number-grid"><div>{i}</div></div>')  # Available numbers
+    # Display numbers in columns (ensure 3-4 numbers per row on mobile)
+    for i in range(0, len(sorted_numbers), 4):
+        row_numbers = sorted_numbers[i:i+4]
+        cols = st.columns(len(row_numbers))  # Dynamically adjust columns for the row
 
-    # Display the grid using the custom CSS layout
-    for i in number_grid:
-        st.markdown(i, unsafe_allow_html=True)
+        for col, number in zip(cols, row_numbers):
+            if number in booked_numbers:
+                col.button(f"Booked: {number}", disabled=True, key=f"booked_{number}")
+            else:
+                if col.button(f"{number}", key=f"available_{number}"):
+                    selected_numbers.append(number)
+                    booked_numbers.add(number)
+
+        # Update the session state after selecting numbers
+        st.session_state.selected_numbers = selected_numbers
 
 # Admin View (optional, simple password)
 with st.expander("🔒 Admin Panel (View Bookings)"):
