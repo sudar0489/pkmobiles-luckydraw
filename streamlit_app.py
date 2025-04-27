@@ -5,13 +5,13 @@ import os
 # File to store bookings
 DATA_FILE = "bookings.csv"
 
-# Initialize CSV if it doesn't exist
-if not os.path.exists(DATA_FILE):
+# Initialize CSV if it doesn't exist or is empty
+if not os.path.exists(DATA_FILE) or os.stat(DATA_FILE).st_size == 0:
     df = pd.DataFrame(columns=["Number", "Name", "Phone"])
     df.to_csv(DATA_FILE, index=False)
-
-# Load existing bookings
-df = pd.read_csv(DATA_FILE)
+else:
+    # Load existing bookings only if the CSV has data
+    df = pd.read_csv(DATA_FILE)
 
 # Create a set of booked numbers
 booked_numbers = set(df["Number"].tolist())
