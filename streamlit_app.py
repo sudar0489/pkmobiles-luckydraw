@@ -1,97 +1,129 @@
-import json
-import os
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import os
 
-# Path to the bookings JSON file
-json_file = "bookings.json"
+# File to store bookings
+DATA_FILE = "bookings.csv"
 
-# Function to reset the bookings file to empty
-def reset_bookings():
-    empty_data = []  # Empty list to reset bookings
-    with open(json_file, 'w') as f:
-        json.dump(empty_data, f)
-    st.success("Bookings have been reset!")
+# Initialize CSV if it doesn't exist
+if not os.path.exists(DATA_FILE):
+    df = pd.DataFrame(columns=["Number", "Name", "Phone"])
+    df.to_csv(DATA_FILE, index=False)
 
-# Function to check if the file exists and load it
-def load_bookings():
-    if os.path.exists(json_file):
-        with open(json_file, 'r') as f:
-            bookings = json.load(f)
-        return bookings
-    else:
-        # If the file does not exist, initialize it as empty
-        with open(json_file, 'w') as f:
-            json.dump([], f)
-        return []
+# Load existing bookings
+df = pd.read_csv(DATA_FILE)
 
-# Load bookings data
-bookings = load_bookings()
+# Create a set of booked numbers
+booked_numbers = set(df["Number"].tolist())
 
-# Function to save bookings data back to JSON
-def save_bookings(bookings):
-    with open(json_file, 'w') as f:
-        json.dump(bookings, f)
+# App title
+st.title("🎉 PK Mobiles Lucky Draw Contest")
 
-# Function to check and update available numbers
-def update_number_status():
-    available_numbers = [str(i) for i in range(1, 51) if str(i) not in [booking["Number"] for booking in bookings]]
-    booked_numbers = [str(i) for i in range(1, 51) if str(i) in [booking["Number"] for booking in bookings]]
-    return available_numbers, booked_numbers
+# Instructions
+st.info("Click on the boxes below to book the numbers. You can select multiple numbers.")
 
-# Function to display numbers as a clickable grid
-def display_numbers():
-    available_numbers, booked_numbers = update_number_status()
-
-    # Display numbers grid (clickable)
-    st.write("### Available Numbers (Green) - Book your numbers")
-    number_grid = st.empty()
+# Booking form
+with st.form(key="booking_form"):
+    name = st.text_input("Enter your Name")
+    phone = st.text_input("Enter your Phone Number")
     
-    # Create a clickable grid with numbers and color them based on availability
-    col1, col2, col3, col4, col5 = st.columns(5)
-    buttons = [col1, col2, col3, col4, col5]
+    # Store selected numbers in session state
+    selected_numbers = st.session_state.get("selected_numbers", [])
+
+    # Display selected numbers
+    if selected_numbers:
+        st.write(f"Selected Numbers: {', '.join(map(str, selected_numbers))}")
     
-    for i, col in enumerate(buttons):
-        for j in range(i * 10 + 1, i * 10 + 11):
-            if str(j) in booked_numbers:
-                col.button(f"{j}", key=f"{j}_booked", disabled=True, help="Booked", use_container_width=True)
-            else:
-                col.button(f"{j}", key=f"{j}_available", on_click=book_number, args=(j,), use_container_width=True)
+    submit = st.form_submit_button("Book Now")
 
-    st.write("### Booked Numbers (Red)")
-    for i in range(1, 51):
-        if str(i) in booked_numbers:
-            st.markdown(f"**Number {i}** is **Booked** (Red)")
+    if submit:
+        if not selected_numbers:
+            st.error("Please select at least one number!")
+        elif not name.strip() or not phone.strip():
+            st.error("Please enter both Name and Phone Number.")
+        else:
+            # Save the bookings
+            new_bookings = pd.DataFrame({
+                "Number": selected_numbers,
+                "Name": [name] * len(selected_numbers),
+                "Phone": [phone] * len(selected_numbers)
+            })
+            df = pd.concat([df, new_bookings], ignore_index=True)
+            df.to_csv(DATA_FILE, index=False)
+            booked_numbers.update(selected_numbers)
+            st.success(f"Successfully booked numbers {', '.join(map(str, selected_numbers))}!")
+            st.session_state.selected_numbers = []  # Clear selected numbers
 
-# Function to book selected number
-def book_number(num):
-    bookings.append({"Number": str(num)})
-    save_bookings(bookings)
-    st.success(f"Number {num} booked successfully!")
-    st.experimental_rerun()  # Refresh the page to show updated status
+# Show grid of numbers (Clickable Boxes)
+st.subheader("📋 Available and Booked Numbers:")
 
-# Admin login for reset functionality
-admin_password = st.text_input("Admin Password", type="password")
-if admin_password == "admin123":  # Use your actual admin password
-    st.subheader("Admin Panel")
-    reset_button = st.button("Reset All Bookings")
-    if reset_button:
-        reset_bookings()
+# Ensure the numbers are sorted in ascending order
+all_numbers = list(range(1, 51))
+sorted_numbers = sorted(all_numbers)
+
+cols = st.columns(10)  # 10 columns for grid layout
+
+# Check if all numbers are booked
+if len(booked_numbers) == len(all_numbers):
+    st.warning("🚫 All numbers are booked. Contest is closed. Thanks for participating, we will let you know next contest.")
 else:
-    st.warning("You need admin access to reset bookings.")
+    # Update the booked numbers and display clickable boxes
+    for i in sorted_numbers:
+        col = cols[(i-1) % 10]
+        
+        # Set color based on the booking status
+        if i in booked_numbers:
+            color = "red"  # Booked numbers will be red
+            disabled = True
+        else:
+            color = "green"  # Available numbers will be green
+            disabled = False
+        
+        # Use custom HTML for coloring buttons (using Markdown)
+        color_html = f'<div style="background-color: {color}; padding: 10px; text-align: center; color: white; font-size: 14px; border-radius: 5px; margin: 5px; width: 40px; height: 40px;">{i}</div>'
+        
+        # Show the button with the color
+        if col.markdown(color_html, unsafe_allow_html=True):
+            # Toggle the number in the selected numbers list
+            if i not in selected_numbers:
+                selected_numbers.append(i)
+            else:
+                selected_numbers.remove(i)
+            st.session_state.selected_numbers = selected_numbers
 
-# Display current booking status
-display_numbers()
+# Update the session state after selecting numbers
+st.session_state.selected_numbers = selected_numbers
 
-# Export booking data to CSV
-def export_to_csv(bookings):
-    df = pd.DataFrame(bookings)
-    df.to_csv('bookings.csv', index=False)
-    st.write("📤 Exported bookings to bookings.csv")
+# Admin View (optional, simple password)
+with st.expander("🔒 Admin Panel (View Bookings)"):
 
-# Admin option to export data
-if admin_password == "admin123":
-    export_button = st.button("Export Bookings as CSV")
-    if export_button:
-        export_to_csv(bookings)
-        st.success("Bookings data has been exported as CSV.")
+    # Admin access
+    admin_password = st.text_input("Enter Admin Password", type="password")
+    
+    # Check if the entered password matches the predefined one
+    correct_password = "pkmobiles123"  # Change password as needed
+    if admin_password == correct_password:
+        st.success("Access Granted ✅")
+        st.write("### All Bookings:")
+        st.dataframe(df.sort_values("Number"))
+        
+        # Export the data as a downloadable CSV file
+        st.download_button(
+            label="Download CSV",
+            data=df.to_csv(index=False),
+            file_name="bookings.csv",
+            mime="text/csv"
+        )
+
+        # Reset button for clearing the bookings
+        if st.button("Reset All Bookings"):
+            confirmation = st.checkbox("Are you sure you want to reset all bookings?")
+            if confirmation:
+                # Clear bookings in the CSV and update the set
+                df = pd.DataFrame(columns=["Number", "Name", "Phone"])
+                df.to_csv(DATA_FILE, index=False)
+                booked_numbers.clear()
+                st.success("All bookings have been reset.")
+                
+    elif admin_password:
+        st.error("Incorrect password ❌")
