@@ -1,5 +1,6 @@
 import json
 import os
+import pandas as pd
 import streamlit as st
 
 # Path to the bookings JSON file
@@ -27,6 +28,11 @@ def load_bookings():
 # Load bookings data
 bookings = load_bookings()
 
+# Function to save bookings data back to JSON
+def save_bookings(bookings):
+    with open(json_file, 'w') as f:
+        json.dump(bookings, f)
+
 # Display available or booked numbers
 def show_numbers():
     available_numbers = [str(i) for i in range(1, 51) if str(i) not in [booking["Number"] for booking in bookings]]
@@ -37,7 +43,7 @@ def show_numbers():
     else:
         st.write("🚫 All numbers are booked. Contest is closed. Thanks for participating, we will let you know next contest.")
 
-# Display the booking buttons with color coding
+# Function to book numbers
 def book_numbers():
     selected_numbers = st.multiselect("Select numbers to book", [str(i) for i in range(1, 51)])
     if st.button("Submit"):
@@ -47,8 +53,7 @@ def book_numbers():
             # Update bookings with selected numbers
             for num in selected_numbers:
                 bookings.append({"Number": num})
-            with open(json_file, 'w') as f:
-                json.dump(bookings, f)
+            save_bookings(bookings)
             st.success(f"Successfully booked numbers: {', '.join(selected_numbers)}")
             st.experimental_rerun()  # Rerun to update the UI with new bookings
 
@@ -74,7 +79,6 @@ book_numbers()
 
 # Export booking data to CSV
 def export_to_csv(bookings):
-    import pandas as pd
     df = pd.DataFrame(bookings)
     df.to_csv('bookings.csv', index=False)
     st.write("📤 Exported bookings to bookings.csv")
