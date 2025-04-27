@@ -54,6 +54,30 @@ with st.form(key="booking_form"):
             st.success(f"Successfully booked numbers {', '.join(map(str, selected_numbers))}!")
             st.session_state.selected_numbers = []  # Clear selected numbers
 
+# Add custom CSS to make the grid responsive
+st.markdown("""
+    <style>
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+        }
+        .number-grid div {
+            background-color: #4CAF50;
+            padding: 10px;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .number-grid .booked {
+            background-color: #f44336;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # Show grid of numbers (Clickable Boxes)
 st.subheader("📋 Available and Booked Numbers:")
 
@@ -61,7 +85,8 @@ st.subheader("📋 Available and Booked Numbers:")
 all_numbers = list(range(1, 51))
 sorted_numbers = sorted(all_numbers)
 
-cols = st.columns(10)  # 10 columns for grid layout
+# Create the grid
+number_grid = []
 
 # Check if all numbers are booked
 if len(booked_numbers) == len(all_numbers):
@@ -69,30 +94,15 @@ if len(booked_numbers) == len(all_numbers):
 else:
     # Update the booked numbers and display clickable boxes
     for i in sorted_numbers:
-        col = cols[(i-1) % 10]
-        
         # Set color based on the booking status
         if i in booked_numbers:
-            color = "red"  # Booked numbers will be red
-            disabled = True
+            number_grid.append(f'<div class="number-grid"><div class="booked">{i}</div></div>')  # Booked numbers
         else:
-            color = "green"  # Available numbers will be green
-            disabled = False
-        
-        # Use custom HTML for coloring buttons (using Markdown)
-        color_html = f'<div style="background-color: {color}; padding: 10px; text-align: center; color: white; font-size: 14px; border-radius: 5px; margin: 5px; width: 40px; height: 40px; display: inline-block;">{i}</div>'
-        
-        # Show the button with the color
-        if col.markdown(color_html, unsafe_allow_html=True):
-            # Toggle the number in the selected numbers list
-            if i not in selected_numbers:
-                selected_numbers.append(i)
-            else:
-                selected_numbers.remove(i)
-            st.session_state.selected_numbers = selected_numbers
+            number_grid.append(f'<div class="number-grid"><div>{i}</div></div>')  # Available numbers
 
-# Update the session state after selecting numbers
-st.session_state.selected_numbers = selected_numbers
+    # Display the grid using the custom CSS layout
+    for i in number_grid:
+        st.markdown(i, unsafe_allow_html=True)
 
 # Admin View (optional, simple password)
 with st.expander("🔒 Admin Panel (View Bookings)"):
