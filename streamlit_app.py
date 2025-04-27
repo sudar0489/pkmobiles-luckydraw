@@ -79,21 +79,14 @@ else:
             color = "green"  # Available numbers will be green
             disabled = False
         
-        # Use custom HTML for coloring buttons (using Markdown)
-        color_html = f'<div style="background-color: {color}; padding: 10px; text-align: center; color: white; font-size: 14px; border-radius: 5px; margin: 5px; width: 40px; height: 40px;">{i}</div>'
-        
-        # Render the button
-        if col.markdown(color_html, unsafe_allow_html=True):
-            if st.button(f"Number {i}", key=f"number_{i}", disabled=disabled):
-                # Toggle the number in the selected numbers list
-                if i not in selected_numbers:
-                    selected_numbers.append(i)
-                else:
-                    selected_numbers.remove(i)
-                st.session_state.selected_numbers = selected_numbers
-
-# Update the session state after selecting numbers
-st.session_state.selected_numbers = selected_numbers
+        # Create a clickable button for each number
+        if col.button(f"{i}", key=f"number_{i}", disabled=disabled, use_container_width=True):
+            # Toggle the number in the selected numbers list
+            if i not in selected_numbers:
+                selected_numbers.append(i)
+            else:
+                selected_numbers.remove(i)
+            st.session_state.selected_numbers = selected_numbers
 
 # Admin View (optional, simple password)
 with st.expander("🔒 Admin Panel (View Bookings)"):
