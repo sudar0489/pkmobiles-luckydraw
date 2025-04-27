@@ -32,7 +32,10 @@ with st.form(key="booking_form"):
     phone = st.text_input("Enter your Phone Number")
     
     # Store selected numbers in session state
-    selected_numbers = st.session_state.get("selected_numbers", [])
+    if "selected_numbers" not in st.session_state:
+        st.session_state.selected_numbers = []
+
+    selected_numbers = st.session_state.selected_numbers
 
     # Display selected numbers
     if selected_numbers:
@@ -127,6 +130,7 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
                 df = pd.DataFrame(columns=["Number", "Name", "Phone"])
                 df.to_csv(DATA_FILE, index=False)
                 booked_numbers.clear()
+                st.session_state.selected_numbers = []  # Clear selected numbers in session state
                 st.success("All bookings have been reset.")
                 
     elif admin_password:
