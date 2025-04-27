@@ -33,31 +33,42 @@ def save_bookings(bookings):
     with open(json_file, 'w') as f:
         json.dump(bookings, f)
 
-# Display available or booked numbers
-def show_numbers():
+# Function to check and update available numbers
+def update_number_status():
     available_numbers = [str(i) for i in range(1, 51) if str(i) not in [booking["Number"] for booking in bookings]]
     booked_numbers = [str(i) for i in range(1, 51) if str(i) in [booking["Number"] for booking in bookings]]
+    return available_numbers, booked_numbers
 
-    if available_numbers:
-        st.write(f"📋 Available Numbers: {', '.join(available_numbers)}")
-    else:
-        st.write("🚫 All numbers are booked. Contest is closed. Thanks for participating, we will let you know next contest.")
+# Function to display numbers as a clickable grid
+def display_numbers():
+    available_numbers, booked_numbers = update_number_status()
 
-# Function to book numbers
-def book_numbers():
-    selected_numbers = st.multiselect("Select numbers to book", [str(i) for i in range(1, 51)])
-    if st.button("Submit"):
-        if not selected_numbers:
-            st.warning("Please select at least one number!")
-        else:
-            # Update bookings with selected numbers
-            for num in selected_numbers:
-                bookings.append({"Number": num})
-            save_bookings(bookings)
-            st.success(f"Successfully booked numbers: {', '.join(selected_numbers)}")
+    # Display numbers grid (clickable)
+    st.write("### Available Numbers (Green) - Book your numbers")
+    number_grid = st.empty()
+    
+    # Create a clickable grid with numbers and color them based on availability
+    col1, col2, col3, col4, col5 = st.columns(5)
+    buttons = [col1, col2, col3, col4, col5]
+    
+    for i, col in enumerate(buttons):
+        for j in range(i * 10 + 1, i * 10 + 11):
+            if str(j) in booked_numbers:
+                col.button(f"{j}", key=f"{j}_booked", disabled=True, help="Booked", use_container_width=True)
+            else:
+                col.button(f"{j}", key=f"{j}_available", on_click=book_number, args=(j,), use_container_width=True)
 
-# Streamlit app layout
-st.title("Lucky Draw Contest")
+    st.write("### Booked Numbers (Red)")
+    for i in range(1, 51):
+        if str(i) in booked_numbers:
+            st.markdown(f"**Number {i}** is **Booked** (Red)")
+
+# Function to book selected number
+def book_number(num):
+    bookings.append({"Number": str(num)})
+    save_bookings(bookings)
+    st.success(f"Number {num} booked successfully!")
+    st.experimental_rerun()  # Refresh the page to show updated status
 
 # Admin login for reset functionality
 admin_password = st.text_input("Admin Password", type="password")
@@ -66,15 +77,11 @@ if admin_password == "admin123":  # Use your actual admin password
     reset_button = st.button("Reset All Bookings")
     if reset_button:
         reset_bookings()
-
 else:
     st.warning("You need admin access to reset bookings.")
 
-# Show current status of bookings
-show_numbers()
-
-# Allow users to book numbers
-book_numbers()
+# Display current booking status
+display_numbers()
 
 # Export booking data to CSV
 def export_to_csv(bookings):
