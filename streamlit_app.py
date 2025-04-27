@@ -57,15 +57,21 @@ with st.form(key="booking_form"):
 # Show grid of numbers (Clickable Boxes)
 st.subheader("📋 Available and Booked Numbers:")
 
+# Ensure the numbers are sorted in ascending order
+all_numbers = list(range(1, 51))
+sorted_numbers = sorted(all_numbers)
+
 cols = st.columns(10)  # 10 columns for grid layout
 
 # Update the booked numbers and display clickable boxes
-for i in range(1, 51):
+for i in sorted_numbers:
     col = cols[(i-1) % 10]
+    # Adjust the button label to make space for the "Booked" label
+    button_label = f"{i}   "
     if i in booked_numbers:
-        col.button(f"{i}\nBooked", disabled=True)
+        col.button(f"{button_label}Booked", disabled=True)
     else:
-        if col.button(str(i)):
+        if col.button(f"{i}"):
             # Toggle the number in the selected numbers list
             if i not in selected_numbers:
                 selected_numbers.append(i)
@@ -76,7 +82,10 @@ for i in range(1, 51):
 # Admin View (optional, simple password)
 with st.expander("🔒 Admin Panel (View Bookings)"):
     admin_password = st.text_input("Enter Admin Password", type="password")
-    if admin_password == "pkmobiles123":  # Change password as needed
+    
+    # Check if the entered password matches the predefined one
+    correct_password = "pkmobiles123"  # Change password as needed
+    if admin_password == correct_password:
         st.success("Access Granted ✅")
         st.write("### All Bookings:")
         st.dataframe(df.sort_values("Number"))
