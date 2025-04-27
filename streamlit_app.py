@@ -10,8 +10,12 @@ if not os.path.exists(DATA_FILE) or os.stat(DATA_FILE).st_size == 0:
     df = pd.DataFrame(columns=["Number", "Name", "Phone"])
     df.to_csv(DATA_FILE, index=False)
 else:
-    # Load existing bookings only if the CSV has data
-    df = pd.read_csv(DATA_FILE)
+    try:
+        # Try reading the CSV
+        df = pd.read_csv(DATA_FILE)
+    except pd.errors.EmptyDataError:
+        # Handle the case where the file exists but is empty
+        df = pd.DataFrame(columns=["Number", "Name", "Phone"])
 
 # Create a set of booked numbers
 booked_numbers = set(df["Number"].tolist())
