@@ -54,6 +54,32 @@ with st.form(key="booking_form"):
             st.success(f"Successfully booked numbers {', '.join(map(str, selected_numbers))}!")
             st.session_state.selected_numbers = []  # Clear selected numbers
 
+# Revoke (Cancel) booking section
+st.subheader("🔄 Cancel Booked Numbers:")
+
+# Display the list of numbers a user has booked
+user_booked_numbers = df[df["Name"] == name]["Number"].tolist()
+
+if user_booked_numbers:
+    st.write("Your booked numbers:")
+    st.write(", ".join(map(str, user_booked_numbers)))
+
+    # Allow the user to select which numbers to cancel
+    numbers_to_cancel = st.multiselect("Select numbers to cancel", options=user_booked_numbers)
+
+    if st.button("Cancel Selected Numbers"):
+        if numbers_to_cancel:
+            # Remove the selected numbers from the dataframe and update the CSV
+            df = df[~df["Number"].isin(numbers_to_cancel)]
+            df.to_csv(DATA_FILE, index=False)
+
+            # Update the booked numbers set
+            booked_numbers.difference_update(numbers_to_cancel)
+
+            st.success(f"Successfully canceled numbers: {', '.join(map(str, numbers_to_cancel))}!")
+        else:
+            st.warning("Please select at least one number to cancel.")
+
 # Show grid of numbers (Clickable Boxes)
 st.subheader("📋 Available and Booked Numbers:")
 
@@ -63,25 +89,6 @@ sorted_numbers = sorted(all_numbers)
 
 # Columns for desktop (10 numbers per row)
 cols = st.columns(10)  # 10 columns for grid layout
-
-# Mobile CSS for displaying 3-4 numbers per row
-mobile_layout = '''<style>
-    @media screen and (max-width: 600px) {
-        .number-box {
-            display: inline-block;
-            width: 22%; /* Adjust width for 3 or 4 numbers in a row */
-            margin: 5px;
-            text-align: center;
-            background-color: green;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-    }
-</style>'''
-
-st.markdown(mobile_layout, unsafe_allow_html=True)
 
 # Check if all numbers are booked
 if len(booked_numbers) == len(all_numbers):
