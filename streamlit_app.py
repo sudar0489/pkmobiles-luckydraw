@@ -5,17 +5,13 @@ import os
 # File to store bookings
 DATA_FILE = "bookings.csv"
 
-# Initialize CSV if it doesn't exist or is empty
-if not os.path.exists(DATA_FILE) or os.stat(DATA_FILE).st_size == 0:
+# Initialize CSV if it doesn't exist
+if not os.path.exists(DATA_FILE):
     df = pd.DataFrame(columns=["Number", "Name", "Phone"])
     df.to_csv(DATA_FILE, index=False)
-else:
-    try:
-        # Try reading the CSV
-        df = pd.read_csv(DATA_FILE)
-    except pd.errors.EmptyDataError:
-        # Handle the case where the file exists but is empty
-        df = pd.DataFrame(columns=["Number", "Name", "Phone"])
+
+# Load existing bookings
+df = pd.read_csv(DATA_FILE)
 
 # Create a set of booked numbers
 booked_numbers = set(df["Number"].tolist())
@@ -32,10 +28,7 @@ with st.form(key="booking_form"):
     phone = st.text_input("Enter your Phone Number")
     
     # Store selected numbers in session state
-    if "selected_numbers" not in st.session_state:
-        st.session_state.selected_numbers = []
-
-    selected_numbers = st.session_state.selected_numbers
+    selected_numbers = st.session_state.get("selected_numbers", [])
 
     # Display selected numbers
     if selected_numbers:
@@ -103,8 +96,6 @@ st.session_state.selected_numbers = selected_numbers
 
 # Admin View (optional, simple password)
 with st.expander("🔒 Admin Panel (View Bookings)"):
-
-    # Admin access
     admin_password = st.text_input("Enter Admin Password", type="password")
     
     # Check if the entered password matches the predefined one
@@ -130,7 +121,6 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
                 df = pd.DataFrame(columns=["Number", "Name", "Phone"])
                 df.to_csv(DATA_FILE, index=False)
                 booked_numbers.clear()
-                st.session_state.selected_numbers = []  # Clear selected numbers in session state
                 st.success("All bookings have been reset.")
                 
     elif admin_password:
