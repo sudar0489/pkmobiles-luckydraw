@@ -20,39 +20,35 @@ booked_numbers = set(df["Number"].tolist())
 st.title("🎉 PK Mobiles Lucky Draw Contest")
 
 # Instructions
-st.info("Click on a number to book it!")
+st.info("Click on the numbers to book them! You can select multiple numbers.")
 
 # Booking form
 with st.form(key="booking_form"):
     name = st.text_input("Enter your Name")
     phone = st.text_input("Enter your Phone Number")
-    selected_number = st.session_state.get("selected_number", None)
 
-    if selected_number:
-        st.write(f"Selected Number: **{selected_number}**")
+    # Multi-select for numbers (allow multiple)
+    available_numbers = [i for i in range(1, 51) if i not in booked_numbers]
+    selected_numbers = st.multiselect("Choose Numbers to Book", available_numbers)
 
     submit = st.form_submit_button("Book Now")
 
     if submit:
-        if not selected_number:
-            st.error("Please select a number first!")
-        elif selected_number in booked_numbers:
-            st.error(f"Number {selected_number} is already booked!")
+        if not selected_numbers:
+            st.error("Please select at least one number!")
         elif not name.strip() or not phone.strip():
             st.error("Please enter both Name and Phone Number.")
         else:
-            # Save booking
-            new_booking = pd.DataFrame({
-                "Number": [selected_number],
-                "Name": [name],
-                "Phone": [phone]
+            # Save the bookings
+            new_bookings = pd.DataFrame({
+                "Number": selected_numbers * len(selected_numbers),
+                "Name": [name] * len(selected_numbers),
+                "Phone": [phone] * len(selected_numbers)
             })
-            df = pd.concat([df, new_booking], ignore_index=True)
+            df = pd.concat([df, new_bookings], ignore_index=True)
             df.to_csv(DATA_FILE, index=False)
-            st.success(f"Successfully booked number {selected_number}!")
-            booked_numbers.add(selected_number)
-            # Clear selected number after booking
-            st.session_state.selected_number = None
+            booked_numbers.update(selected_numbers)
+            st.success(f"Successfully booked numbers {', '.join(map(str, selected_numbers))}!")
             st.experimental_rerun()
 
 # Show grid of numbers
