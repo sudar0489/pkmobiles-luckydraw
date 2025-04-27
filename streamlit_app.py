@@ -63,29 +63,33 @@ sorted_numbers = sorted(all_numbers)
 
 cols = st.columns(10)  # 10 columns for grid layout
 
-# Update the booked numbers and display clickable boxes
-for i in sorted_numbers:
-    col = cols[(i-1) % 10]
-    
-    # Set color based on the booking status
-    if i in booked_numbers:
-        color = "red"  # Booked numbers will be red
-        disabled = True
-    else:
-        color = "green"  # Available numbers will be green
-        disabled = False
-    
-    # Use custom HTML for coloring buttons (using Markdown)
-    color_html = f'<div style="background-color: {color}; padding: 10px; text-align: center; color: white; font-size: 14px; border-radius: 5px; margin: 5px; width: 40px; height: 40px;">{i}</div>'
-    
-    # Show the button with the color
-    if col.markdown(color_html, unsafe_allow_html=True):
-        # Toggle the number in the selected numbers list
-        if i not in selected_numbers:
-            selected_numbers.append(i)
+# Check if all numbers are booked
+if len(booked_numbers) == len(all_numbers):
+    st.warning("🚫 All numbers are booked. Contest is closed. Thanks for participating, we will let you know next contest.")
+else:
+    # Update the booked numbers and display clickable boxes
+    for i in sorted_numbers:
+        col = cols[(i-1) % 10]
+        
+        # Set color based on the booking status
+        if i in booked_numbers:
+            color = "red"  # Booked numbers will be red
+            disabled = True
         else:
-            selected_numbers.remove(i)
-        st.session_state.selected_numbers = selected_numbers
+            color = "green"  # Available numbers will be green
+            disabled = False
+        
+        # Use custom HTML for coloring buttons (using Markdown)
+        color_html = f'<div style="background-color: {color}; padding: 10px; text-align: center; color: white; font-size: 14px; border-radius: 5px; margin: 5px; width: 40px; height: 40px;">{i}</div>'
+        
+        # Show the button with the color
+        if col.markdown(color_html, unsafe_allow_html=True):
+            # Toggle the number in the selected numbers list
+            if i not in selected_numbers:
+                selected_numbers.append(i)
+            else:
+                selected_numbers.remove(i)
+            st.session_state.selected_numbers = selected_numbers
 
 # Update the session state after selecting numbers
 st.session_state.selected_numbers = selected_numbers
@@ -113,6 +117,7 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
         if st.button("Reset All Bookings"):
             confirmation = st.checkbox("Are you sure you want to reset all bookings?")
             if confirmation:
+                # Clear bookings in the CSV and update the set
                 df = pd.DataFrame(columns=["Number", "Name", "Phone"])
                 df.to_csv(DATA_FILE, index=False)
                 booked_numbers.clear()
