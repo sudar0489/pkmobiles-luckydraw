@@ -69,9 +69,9 @@ for i in sorted_numbers:
     # Adjust the button label to make space for the "Booked" label
     button_label = f"{i}   "
     if i in booked_numbers:
-        col.button(f"{button_label}Booked", disabled=True)
+        col.button(f"{button_label}Booked", disabled=True, help="This number is already booked.", key=f"booked_{i}", use_container_width=True)
     else:
-        if col.button(f"{i}"):
+        if col.button(f"{i}", key=f"number_{i}", use_container_width=True):
             # Toggle the number in the selected numbers list
             if i not in selected_numbers:
                 selected_numbers.append(i)
@@ -89,5 +89,13 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
         st.success("Access Granted ✅")
         st.write("### All Bookings:")
         st.dataframe(df.sort_values("Number"))
+        
+        # Export the data as a downloadable CSV file
+        st.download_button(
+            label="Download CSV",
+            data=df.to_csv(index=False),
+            file_name="bookings.csv",
+            mime="text/csv"
+        )
     elif admin_password:
         st.error("Incorrect password ❌")
