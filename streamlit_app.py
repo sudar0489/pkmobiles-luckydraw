@@ -61,27 +61,48 @@ st.subheader("📋 Available and Booked Numbers:")
 all_numbers = list(range(1, 51))
 sorted_numbers = sorted(all_numbers)
 
-# Calculate the number of columns for mobile view
-cols = st.columns(4)  # This will display up to 4 columns
-
 # Check if all numbers are booked
 if len(booked_numbers) == len(all_numbers):
     st.warning("🚫 All numbers are booked. Contest is closed. Thanks for participating, we will let you know next contest.")
 else:
-    # Display numbers in columns (ensure 3-4 numbers per row on mobile)
-    for i in range(0, len(sorted_numbers), 4):
-        row_numbers = sorted_numbers[i:i+4]
-        cols = st.columns(len(row_numbers))  # Dynamically adjust columns for the row
+    # Create a layout for mobile
+    mobile_layout = '''<style>
+        @media screen and (max-width: 600px) {
+            .number-box {
+                display: inline-block;
+                width: 22%; /* Adjust width to make 3-4 numbers fit in a row */
+                margin: 5px;
+                text-align: center;
+                background-color: green;
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+                font-size: 14px;
+            }
+        }
+    </style>'''
 
+    st.markdown(mobile_layout, unsafe_allow_html=True)
+
+    # Display numbers in columns (up to 4 per row)
+    col_count = 4  # for mobile, we will display up to 4 numbers per row
+    row_count = len(sorted_numbers) // col_count + 1
+
+    # Show numbers in rows of 3 or 4 (based on mobile screen size)
+    for i in range(row_count):
+        row_numbers = sorted_numbers[i * col_count: (i + 1) * col_count]
+        cols = st.columns(len(row_numbers))  # Dynamically adjust number of columns in each row
+        
         for col, number in zip(cols, row_numbers):
+            # Determine button properties
             if number in booked_numbers:
-                col.button(f"Booked: {number}", disabled=True, key=f"booked_{number}")
+                col.markdown(f'<div class="number-box" style="background-color: red;">{number}</div>', unsafe_allow_html=True)
             else:
                 if col.button(f"{number}", key=f"available_{number}"):
                     selected_numbers.append(number)
                     booked_numbers.add(number)
 
-        # Update the session state after selecting numbers
+        # Update session state after selecting numbers
         st.session_state.selected_numbers = selected_numbers
 
 # Admin View (optional, simple password)
