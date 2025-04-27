@@ -66,18 +66,28 @@ cols = st.columns(10)  # 10 columns for grid layout
 # Update the booked numbers and display clickable boxes
 for i in sorted_numbers:
     col = cols[(i-1) % 10]
-    # Adjust the button label to make space for the "Booked" label
-    button_label = f"{i}   "
+    
+    # Set color based on the booking status
     if i in booked_numbers:
-        col.button(f"{button_label}Booked", disabled=True, help="This number is already booked.", key=f"booked_{i}", use_container_width=True)
+        color = "red"  # Booked numbers will be red
+        button_label = f"Booked {i}"
+        disabled = True
     else:
-        if col.button(f"{i}", key=f"number_{i}", use_container_width=True):
-            # Toggle the number in the selected numbers list
-            if i not in selected_numbers:
-                selected_numbers.append(i)
-            else:
-                selected_numbers.remove(i)
-            st.session_state.selected_numbers = selected_numbers
+        color = "green"  # Available numbers will be green
+        button_label = f"Available {i}"
+        disabled = False
+    
+    # Use a button with color feedback for booking status
+    if col.button(f"{i}", key=f"number_{i}", disabled=disabled, use_container_width=True):
+        # Toggle the number in the selected numbers list
+        if i not in selected_numbers:
+            selected_numbers.append(i)
+        else:
+            selected_numbers.remove(i)
+        st.session_state.selected_numbers = selected_numbers
+
+# Update the session state after selecting numbers
+st.session_state.selected_numbers = selected_numbers
 
 # Admin View (optional, simple password)
 with st.expander("🔒 Admin Panel (View Bookings)"):
