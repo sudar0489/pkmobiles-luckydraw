@@ -70,15 +70,13 @@ for i in sorted_numbers:
     # Set color based on the booking status
     if i in booked_numbers:
         color = "red"  # Booked numbers will be red
-        button_label = f"Booked {i}"
         disabled = True
     else:
         color = "green"  # Available numbers will be green
-        button_label = f"Available {i}"
         disabled = False
     
     # Use custom HTML for coloring buttons (using Markdown)
-    color_html = f'<div style="background-color: {color}; padding: 15px; text-align: center; color: white; font-size: 18px;">{button_label}</div>'
+    color_html = f'<div style="background-color: {color}; padding: 20px; text-align: center; color: white; font-size: 18px; border-radius: 10px; margin: 5px;">{i}</div>'
     
     # Show the button with the color
     if col.markdown(color_html, unsafe_allow_html=True):
