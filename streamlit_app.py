@@ -55,7 +55,6 @@ def book_numbers():
                 bookings.append({"Number": num})
             save_bookings(bookings)
             st.success(f"Successfully booked numbers: {', '.join(selected_numbers)}")
-            st.experimental_rerun()  # Rerun to update the UI with new bookings
 
 # Streamlit app layout
 st.title("Lucky Draw Contest")
@@ -67,7 +66,7 @@ if admin_password == "admin123":  # Use your actual admin password
     reset_button = st.button("Reset All Bookings")
     if reset_button:
         reset_bookings()
-        st.experimental_rerun()  # Rerun to refresh the page
+
 else:
     st.warning("You need admin access to reset bookings.")
 
