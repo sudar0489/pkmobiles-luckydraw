@@ -53,13 +53,13 @@ with st.form(key="booking_form"):
             booked_numbers.update(selected_numbers)
             st.success(f"Successfully booked numbers {', '.join(map(str, selected_numbers))}!")
             st.session_state.selected_numbers = []  # Clear selected numbers
-            st.experimental_rerun()
 
 # Show grid of numbers (Clickable Boxes)
 st.subheader("📋 Available and Booked Numbers:")
 
 cols = st.columns(10)  # 10 columns for grid layout
 
+# Update the booked numbers and display clickable boxes
 for i in range(1, 51):
     col = cols[(i-1) % 10]
     if i in booked_numbers:
