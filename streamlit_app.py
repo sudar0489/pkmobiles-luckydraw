@@ -20,17 +20,20 @@ booked_numbers = set(df["Number"].tolist())
 st.title("🎉 PK Mobiles Lucky Draw Contest")
 
 # Instructions
-st.info("Click on the numbers to book them! You can select multiple numbers.")
+st.info("Click on the boxes below to book the numbers. You can select multiple numbers.")
 
 # Booking form
 with st.form(key="booking_form"):
     name = st.text_input("Enter your Name")
     phone = st.text_input("Enter your Phone Number")
+    
+    # Store selected numbers in session state
+    selected_numbers = st.session_state.get("selected_numbers", [])
 
-    # Multi-select for numbers (allow multiple)
-    available_numbers = [i for i in range(1, 51) if i not in booked_numbers]
-    selected_numbers = st.multiselect("Choose Numbers to Book", available_numbers)
-
+    # Display selected numbers
+    if selected_numbers:
+        st.write(f"Selected Numbers: {', '.join(map(str, selected_numbers))}")
+    
     submit = st.form_submit_button("Book Now")
 
     if submit:
@@ -41,7 +44,7 @@ with st.form(key="booking_form"):
         else:
             # Save the bookings
             new_bookings = pd.DataFrame({
-                "Number": selected_numbers * len(selected_numbers),
+                "Number": selected_numbers,
                 "Name": [name] * len(selected_numbers),
                 "Phone": [phone] * len(selected_numbers)
             })
@@ -49,9 +52,10 @@ with st.form(key="booking_form"):
             df.to_csv(DATA_FILE, index=False)
             booked_numbers.update(selected_numbers)
             st.success(f"Successfully booked numbers {', '.join(map(str, selected_numbers))}!")
+            st.session_state.selected_numbers = []  # Clear selected numbers
             st.experimental_rerun()
 
-# Show grid of numbers
+# Show grid of numbers (Clickable Boxes)
 st.subheader("📋 Available and Booked Numbers:")
 
 cols = st.columns(10)  # 10 columns for grid layout
@@ -62,7 +66,12 @@ for i in range(1, 51):
         col.button(f"{i}\nBooked", disabled=True)
     else:
         if col.button(str(i)):
-            st.session_state.selected_number = i
+            # Toggle the number in the selected numbers list
+            if i not in selected_numbers:
+                selected_numbers.append(i)
+            else:
+                selected_numbers.remove(i)
+            st.session_state.selected_numbers = selected_numbers
 
 # Admin View (optional, simple password)
 with st.expander("🔒 Admin Panel (View Bookings)"):
