@@ -76,7 +76,7 @@ for i in sorted_numbers:
         disabled = False
     
     # Use custom HTML for coloring buttons (using Markdown)
-    color_html = f'<div style="background-color: {color}; padding: 20px; text-align: center; color: white; font-size: 18px; border-radius: 10px; margin: 5px;">{i}</div>'
+    color_html = f'<div style="background-color: {color}; padding: 10px; text-align: center; color: white; font-size: 14px; border-radius: 5px; margin: 5px; width: 40px; height: 40px;">{i}</div>'
     
     # Show the button with the color
     if col.markdown(color_html, unsafe_allow_html=True):
@@ -108,5 +108,15 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
             file_name="bookings.csv",
             mime="text/csv"
         )
+
+        # Reset button for clearing the bookings
+        if st.button("Reset All Bookings"):
+            confirmation = st.checkbox("Are you sure you want to reset all bookings?")
+            if confirmation:
+                df = pd.DataFrame(columns=["Number", "Name", "Phone"])
+                df.to_csv(DATA_FILE, index=False)
+                booked_numbers.clear()
+                st.success("All bookings have been reset.")
+                
     elif admin_password:
         st.error("Incorrect password ❌")
