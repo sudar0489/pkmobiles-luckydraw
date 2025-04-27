@@ -1,85 +1,52 @@
 import streamlit as st
-import pandas as pd
-import gspread
-from google.oauth2.service_account import Credentials
 
-# ----------------------------
-# GOOGLE SHEETS CONNECTION
-# ----------------------------
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"],
-    scopes=scope,
-)
-client = gspread.authorize(credentials)
-sheet = client.open("LuckyDrawBookings").worksheet("Sheet1")  # Change to your sheet name if different
+# Initialize session state for bookings
+if "bookings" not in st.session_state:
+    st.session_state.bookings = {}
 
-# ----------------------------
-# FETCH BOOKED NUMBERS
-# ----------------------------
-bookings = sheet.get_all_records()
-booked_numbers = [int(record['Number']) for record in bookings]
+# App title
+st.title("🎉 PK Mobiles Lucky Draw Contest")
 
-# ----------------------------
-# STREAMLIT PAGE
-# ----------------------------
-st.set_page_config(page_title="PK Mobiles Lucky Draw", page_icon="🎉", layout="centered")
+# Instructions
+st.info("Select your number, enter your name and phone number to book!")
 
-st.title("🎉 PK Mobiles Lucky Draw - Book Your Lucky Number")
+# Input form
+with st.form(key="booking_form"):
+    name = st.text_input("Enter your Name")
+    phone = st.text_input("Enter your Phone Number")
+    selected_number = st.number_input("Choose a Number (1-50)", min_value=1, max_value=50, step=1)
+    submit = st.form_submit_button("Book Now")
 
-available_numbers = list(range(1, 51))  # Numbers 1 to 50
-cols = st.columns(5)
+    if submit:
+        if selected_number in st.session_state.bookings:
+            st.error(f"Number {selected_number} is already booked! Please choose another.")
+        elif not name.strip() or not phone.strip():
+            st.error("Please enter both Name and Phone Number.")
+        else:
+            # Save the booking
+            st.session_state.bookings[selected_number] = {"name": name, "phone": phone}
+            st.success(f"Successfully booked number {selected_number}!")
 
-# Display Numbers in Grid
-for i, num in enumerate(available_numbers):
-    col = cols[i % 5]
-    if num in booked_numbers:
-        col.button(f"{num}", disabled=True)
+# Show grid of numbers
+st.subheader("📋 Available and Booked Numbers:")
+
+cols = st.columns(10)  # 10 columns for grid layout
+for i in range(1, 51):
+    col = cols[(i-1) % 10]
+    if i in st.session_state.bookings:
+        col.button(f"{i} - Booked", disabled=True)
     else:
-        if col.button(f"{num}"):
-            st.session_state['selected_number'] = num
+        col.button(str(i))
 
-# ----------------------------
-# AFTER NUMBER SELECTION
-# ----------------------------
-if 'selected_number' in st.session_state:
-    selected_number = st.session_state['selected_number']
-    
-    st.success(f"You selected Number: {selected_number}")
-    st.write("Please fill your details to confirm booking:")
-
-    with st.form(key="booking_form", clear_on_submit=True):
-        name = st.text_input("Your Name", max_chars=50)
-        phone = st.text_input("Phone Number", max_chars=10)
-        submit_button = st.form_submit_button("Confirm Booking")
-        
-        if submit_button:
-            # Re-fetch latest booked numbers (in case someone booked meanwhile)
-            bookings = sheet.get_all_records()
-            booked_numbers = [int(record['Number']) for record in bookings]
-
-            if selected_number in booked_numbers:
-                st.error("Oops! This number was just booked by someone else. Please select another.")
-                del st.session_state['selected_number']
-                st.experimental_rerun()
-            else:
-                # Save booking
-                sheet.append_row([selected_number, name, phone])
-                st.success(f"🎉 Congratulations {name}! Your number {selected_number} is booked successfully.")
-                
-                # Show UPI QR Code (replace with your QR image link)
-                st.image("https://your-qr-image-link-here.com/upi_qr.jpg", width=250)  # Replace with your QR code URL
-                
-                # WhatsApp Group Link
-                st.markdown(
-                    """
-                    **Join our WhatsApp Group for Draw Updates:**  
-                    [Join Now](https://chat.whatsapp.com/yourgroupinvitehere)
-                    """,
-                    unsafe_allow_html=True
-                )
-                st.balloons()
-                
-                # Clear selected number to avoid duplicate form
-                del st.session_state['selected_number']
-                st.stop()
+# Admin View (optional, simple password)
+with st.expander("🔒 Admin Panel (View Bookings)"):
+    admin_password = st.text_input("Enter Admin Password", type="password")
+    if admin_password == "pkmobiles123":  # You can change this password
+        st.success("Access Granted ✅")
+        st.write("### All Bookings:")
+        st.table([
+            {"Number": num, "Name": details["name"], "Phone": details["phone"]}
+            for num, details in sorted(st.session_state.bookings.items())
+        ])
+    elif admin_password:
+        st.error("Incorrect password ❌")
