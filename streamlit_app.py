@@ -118,9 +118,10 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
             confirmation = st.checkbox("Are you sure you want to reset all bookings?")
             if confirmation:
                 # Clear bookings in the CSV and update the set
-                df = pd.DataFrame(columns=["Number", "Name", "Phone"])
+                df = pd.DataFrame(columns=["Number", "Name", "Phone"])  # Empty DataFrame to reset bookings
                 df.to_csv(DATA_FILE, index=False)  # Save empty CSV file to reset bookings
                 booked_numbers.clear()  # Clear the booked numbers set
+                st.session_state.selected_numbers = []  # Clear selected numbers in session state
                 st.experimental_rerun()  # Force a page reload to reset everything
                 st.success("All bookings have been reset.")
                 
