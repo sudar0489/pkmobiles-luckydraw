@@ -61,7 +61,6 @@ st.subheader("📋 Available and Booked Numbers:")
 all_numbers = list(range(1, 51))
 sorted_numbers = sorted(all_numbers)
 
-# Columns for desktop (10 numbers per row)
 cols = st.columns(10)  # 10 columns for grid layout
 
 # Check if all numbers are booked
@@ -70,7 +69,7 @@ if len(booked_numbers) == len(all_numbers):
 else:
     # Update the booked numbers and display clickable boxes
     for i in sorted_numbers:
-        col = cols[(i-1) % 10]  # Use the original desktop layout (10 columns)
+        col = cols[(i-1) % 10]
         
         # Set color based on the booking status
         if i in booked_numbers:
@@ -80,7 +79,7 @@ else:
             color = "green"  # Available numbers will be green
             disabled = False
         
-        # Create a clickable button for each number (desktop)
+        # Create a clickable button for each number
         if col.button(f"{i}", key=f"number_{i}", disabled=disabled, use_container_width=True):
             # Toggle the number in the selected numbers list
             if i not in selected_numbers:
@@ -95,28 +94,12 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
     admin_password = st.text_input("Enter Admin Password", type="password")
     
     # Check if the entered password matches the predefined one
-    correct_password = "pkmobiles123"  # Change password as needed
+    correct_password = "prem1988"  # Changed password
     if admin_password == correct_password:
         st.success("Access Granted ✅")
         st.write("### All Bookings:")
         st.dataframe(df.sort_values("Number"))
         
-        # Allow admin to select booked numbers to revoke (cancel)
-        cancel_numbers = st.multiselect("Select numbers to revoke (cancel)", options=booked_numbers)
-
-        if st.button("Revoke Selected Numbers"):
-            if cancel_numbers:
-                # Remove the selected numbers from the dataframe and update the CSV
-                df = df[~df["Number"].isin(cancel_numbers)]
-                df.to_csv(DATA_FILE, index=False)
-
-                # Update the booked numbers set
-                booked_numbers.difference_update(cancel_numbers)
-
-                st.success(f"Successfully revoked (cancelled) numbers: {', '.join(map(str, cancel_numbers))}!")
-            else:
-                st.warning("Please select at least one number to revoke.")
-
         # Export the data as a downloadable CSV file
         st.download_button(
             label="Download CSV",
@@ -124,6 +107,20 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
             file_name="bookings.csv",
             mime="text/csv"
         )
+
+        # Revoke bookings (Admin only)
+        with st.form(key="revoke_form"):
+            revoke_number = st.number_input("Enter number to revoke", min_value=1, max_value=50)
+            revoke_button = st.form_submit_button("Revoke Booking")
+
+            if revoke_button:
+                if revoke_number in booked_numbers:
+                    booked_numbers.remove(revoke_number)
+                    df = df[df["Number"] != revoke_number]  # Remove the revoked number's booking
+                    df.to_csv(DATA_FILE, index=False)
+                    st.success(f"Booking for number {revoke_number} has been revoked.")
+                else:
+                    st.error(f"Number {revoke_number} is not booked.")
 
         # Reset button for clearing the bookings
         if st.button("Reset All Bookings"):
