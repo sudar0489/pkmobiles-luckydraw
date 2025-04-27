@@ -61,52 +61,56 @@ st.subheader("📋 Available and Booked Numbers:")
 all_numbers = list(range(1, 51))
 sorted_numbers = sorted(all_numbers)
 
+# Columns for desktop (10 numbers per row)
+cols = st.columns(10)  # 10 columns for grid layout
+
+# Mobile CSS for displaying 3-4 numbers per row
+mobile_layout = '''<style>
+    @media screen and (max-width: 600px) {
+        .number-box {
+            display: inline-block;
+            width: 22%; /* Adjust width for 3 or 4 numbers in a row */
+            margin: 5px;
+            text-align: center;
+            background-color: green;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+    }
+</style>'''
+
+st.markdown(mobile_layout, unsafe_allow_html=True)
+
 # Check if all numbers are booked
 if len(booked_numbers) == len(all_numbers):
     st.warning("🚫 All numbers are booked. Contest is closed. Thanks for participating, we will let you know next contest.")
 else:
-    # Create a layout for mobile
-    mobile_layout = '''<style>
-        @media screen and (max-width: 600px) {
-            .number-box {
-                display: inline-block;
-                width: 22%; /* Adjust width to make 3-4 numbers fit in a row */
-                margin: 5px;
-                text-align: center;
-                background-color: green;
-                color: white;
-                padding: 10px;
-                border-radius: 5px;
-                font-size: 14px;
-            }
-        }
-    </style>'''
-
-    st.markdown(mobile_layout, unsafe_allow_html=True)
-
-    # Display numbers in columns (up to 4 per row)
-    col_count = 4  # for mobile, we will display up to 4 numbers per row
-    row_count = len(sorted_numbers) // col_count + 1
-
-    # Show numbers in rows of 3 or 4 (based on mobile screen size)
-    for i in range(row_count):
-        row_numbers = sorted_numbers[i * col_count: (i + 1) * col_count]
-        cols = st.columns(len(row_numbers))  # Dynamically adjust number of columns in each row
+    # Update the booked numbers and display clickable boxes
+    for i in sorted_numbers:
+        col = cols[(i-1) % 10]  # Use the original desktop layout (10 columns)
         
-        for col, number in zip(cols, row_numbers):
-            # Determine button properties
-            if number in booked_numbers:
-                col.markdown(f'<div class="number-box" style="background-color: red;">{number}</div>', unsafe_allow_html=True)
+        # Set color based on the booking status
+        if i in booked_numbers:
+            color = "red"  # Booked numbers will be red
+            disabled = True
+        else:
+            color = "green"  # Available numbers will be green
+            disabled = False
+        
+        # Create a clickable button for each number (desktop)
+        if col.button(f"{i}", key=f"number_{i}", disabled=disabled, use_container_width=True):
+            # Toggle the number in the selected numbers list
+            if i not in selected_numbers:
+                selected_numbers.append(i)
             else:
-                if col.button(f"{number}", key=f"available_{number}"):
-                    selected_numbers.append(number)
-                    booked_numbers.add(number)
-
-        # Update session state after selecting numbers
-        st.session_state.selected_numbers = selected_numbers
+                selected_numbers.remove(i)
+            st.session_state.selected_numbers = selected_numbers
 
 # Admin View (optional, simple password)
 with st.expander("🔒 Admin Panel (View Bookings)"):
+
     admin_password = st.text_input("Enter Admin Password", type="password")
     
     # Check if the entered password matches the predefined one
