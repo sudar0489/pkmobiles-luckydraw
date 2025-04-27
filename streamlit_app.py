@@ -77,8 +77,11 @@ for i in sorted_numbers:
         button_label = f"Available {i}"
         disabled = False
     
-    # Use a button with color feedback for booking status
-    if col.button(f"{i}", key=f"number_{i}", disabled=disabled, use_container_width=True):
+    # Use custom HTML for coloring buttons (using Markdown)
+    color_html = f'<div style="background-color: {color}; padding: 15px; text-align: center; color: white; font-size: 18px;">{button_label}</div>'
+    
+    # Show the button with the color
+    if col.markdown(color_html, unsafe_allow_html=True):
         # Toggle the number in the selected numbers list
         if i not in selected_numbers:
             selected_numbers.append(i)
