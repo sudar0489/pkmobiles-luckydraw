@@ -7,7 +7,7 @@ DATA_FILE = "bookings.csv"
 
 # Initialize CSV if it doesn't exist
 if not os.path.exists(DATA_FILE):
-    df = pd.DataFrame(columns=["Number", "Name", "Phone"])
+    df = pd.DataFrame(columns=["Number", "Name", "Phone", "Amount", "TransactionID"])
     df.to_csv(DATA_FILE, index=False)
 
 # Load existing bookings
@@ -26,6 +26,8 @@ st.info("Click on the boxes below to book the numbers. You can select multiple n
 with st.form(key="booking_form"):
     name = st.text_input("Enter your Name")
     phone = st.text_input("Enter your Phone Number")
+    amount = st.text_input("Enter Paid Amount")
+    transaction_id = st.text_input("Enter Transaction Number / UPI Reference ID")
     
     # Store selected numbers in session state
     selected_numbers = st.session_state.get("selected_numbers", [])
@@ -39,14 +41,16 @@ with st.form(key="booking_form"):
     if submit:
         if not selected_numbers:
             st.error("Please select at least one number!")
-        elif not name.strip() or not phone.strip():
-            st.error("Please enter both Name and Phone Number.")
+        elif not all([name.strip(), phone.strip(), amount.strip(), transaction_id.strip()]):
+            st.error("Please fill in all fields: Name, Phone, Amount, and Transaction ID.")
         else:
             # Save the bookings
             new_bookings = pd.DataFrame({
                 "Number": selected_numbers,
                 "Name": [name] * len(selected_numbers),
-                "Phone": [phone] * len(selected_numbers)
+                "Phone": [phone] * len(selected_numbers),
+                "Amount": [amount] * len(selected_numbers),
+                "TransactionID": [transaction_id] * len(selected_numbers)
             })
             df = pd.concat([df, new_bookings], ignore_index=True)
             df.to_csv(DATA_FILE, index=False)
@@ -90,17 +94,14 @@ else:
 
 # Admin View (optional, simple password)
 with st.expander("🔒 Admin Panel (View Bookings)"):
-
     admin_password = st.text_input("Enter Admin Password", type="password")
     
-    # Check if the entered password matches the predefined one
-    correct_password = "prem1988"  # Changed password
+    correct_password = "prem1988"
     if admin_password == correct_password:
         st.success("Access Granted ✅")
         st.write("### All Bookings:")
         st.dataframe(df.sort_values("Number"))
         
-        # Export the data as a downloadable CSV file
         st.download_button(
             label="Download CSV",
             data=df.to_csv(index=False),
@@ -108,7 +109,7 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
             mime="text/csv"
         )
 
-        # Revoke bookings (Admin only)
+        # Revoke bookings
         with st.form(key="revoke_form"):
             revoke_number = st.number_input("Enter number to revoke", min_value=1, max_value=50)
             revoke_button = st.form_submit_button("Revoke Booking")
@@ -116,21 +117,18 @@ with st.expander("🔒 Admin Panel (View Bookings)"):
             if revoke_button:
                 if revoke_number in booked_numbers:
                     booked_numbers.remove(revoke_number)
-                    df = df[df["Number"] != revoke_number]  # Remove the revoked number's booking
+                    df = df[df["Number"] != revoke_number]
                     df.to_csv(DATA_FILE, index=False)
                     st.success(f"Booking for number {revoke_number} has been revoked.")
                 else:
                     st.error(f"Number {revoke_number} is not booked.")
 
-        # Reset button for clearing the bookings
         if st.button("Reset All Bookings"):
             confirmation = st.checkbox("Are you sure you want to reset all bookings?")
             if confirmation:
-                # Clear bookings in the CSV and update the set
-                df = pd.DataFrame(columns=["Number", "Name", "Phone"])
+                df = pd.DataFrame(columns=["Number", "Name", "Phone", "Amount", "TransactionID"])
                 df.to_csv(DATA_FILE, index=False)
                 booked_numbers.clear()
                 st.success("All bookings have been reset.")
-                
     elif admin_password:
         st.error("Incorrect password ❌")
